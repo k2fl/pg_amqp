@@ -86,18 +86,15 @@ static struct brokerstate *HEAD_BS = NULL;
 static void elog_message(const char *error_msg, amqp_bytes_t exchange_b,
                          amqp_bytes_t routing_key_b, amqp_bytes_t body_b) {
   int el = exchange_b.len * sizeof(char);
-  char *exchange = (char *)calloc(exchange_b.len, sizeof(char));
+  char *exchange = (char *)palloc0(el);
   snprintf(exchange, el + 1, "%s", (const char *)exchange_b.bytes);
 
   int rl = routing_key_b.len * sizeof(char);
-  char *routing_key = (char *)calloc(routing_key_b.len, sizeof(char));
+  char *routing_key = (char *)palloc0(rl);
   snprintf(routing_key, rl + 1, "%s", (const char *)routing_key_b.bytes);
 
-  elog(ERROR, "%s, exchange[%s], routing_key[%s], body[%s]", error_msg,
+  elog(WARNING, "%s, exchange[%s], routing_key[%s], body[%s]", error_msg,
        exchange, routing_key, (const char *)body_b.bytes);
-
-  free(exchange);
-  free(routing_key);
 }
 
 static void local_amqp_disconnect_bs(struct brokerstate *bs) {
@@ -145,18 +142,21 @@ static void amqp_local_phase2(XactEvent event, void *arg) {
         amqp_tx_rollback(bs->conn, 2, AMQP_EMPTY_TABLE);
       reply = amqp_get_rpc_reply();
       if (reply->reply_type != AMQP_RESPONSE_NORMAL) {
-        elog(WARNING, "amqp could not commit tx mode on broker %d",
+        elog(WARNING, "amqp could not rollback tx mode on broker %d",
              bs->broker_id);
         local_amqp_disconnect_bs(bs);
       }
       bs->uncommitted = 0;
     }
     break;
-  case XACT_EVENT_PRE_PREPARE:
-  case XACT_EVENT_PRE_COMMIT:
   case XACT_EVENT_PREPARE:
     /* nothin' */
-    return;
+    break;
+  case XACT_EVENT_PRE_COMMIT:
+    /* nothin' */
+    break;
+  case XACT_EVENT_PRE_PREPARE:
+    /* nothin' */
     break;
   }
 }
