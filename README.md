@@ -1,6 +1,8 @@
 pg_amqp 0.3.1
 =============
 
+![build status](https://travis-ci.org/xstevens/pg_amqp.svg?branch=master)
+
 The pg_amqp package provides the ability for postgres statements to directly
 publish messages to an [AMQP](http://www.amqp.org/) broker.
 

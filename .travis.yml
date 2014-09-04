@@ -10,7 +10,7 @@ before_install:
   - sudo apt-get install -qq gcc-4.8
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 99
   - gcc --version
-install: make
+install: echo "Move along, nothing to see here"
 script: make
 env:
   - LANG="en_US.UTF-8"
