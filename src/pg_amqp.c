@@ -157,7 +157,7 @@ local_amqp_get_bs(broker_id) {
   if(bs->conn) return bs;
   if(SPI_connect() == SPI_ERROR_CONNECT) return NULL;
   snprintf(sql, sizeof(sql), "SELECT host, port, vhost, username, password "
-                             "  FROM amqp.broker "
+                             " FROM amqp.broker "
                              " WHERE broker_id = %d "
                              " ORDER BY host DESC, port", broker_id);
   if(SPI_OK_SELECT == SPI_execute(sql, true, 100)) {
@@ -273,27 +273,45 @@ pg_amqp_exchange_declare(PG_FUNCTION_ARGS) {
   }
   PG_RETURN_BOOL(0 != 0);
 }
+
+static void elog_message(const char* error_msg, amqp_bytes_t exchange_b, 
+                         amqp_bytes_t routing_key_b, amqp_bytes_t body_b) {
+  int el = exchange_b.len * sizeof(char);
+  char* exchange = (char*)calloc(exchange_b.len, sizeof(char));
+  snprintf(exchange, el + 1, "%s", (const char *)exchange_b.bytes);
+
+  int rl = routing_key_b.len * sizeof(char);
+  char* routing_key = (char*)calloc(routing_key_b.len, sizeof(char));
+  snprintf(routing_key, rl + 1, "%s", (const char *)routing_key_b.bytes);
+
+  elog(ERROR, "%s, exchange[%s], routing_key[%s], body[%s]",
+       error_msg, exchange, routing_key, (const char *)body_b.bytes);
+
+  free(exchange);
+  free(routing_key);
+}
+
 static Datum
 pg_amqp_publish_opt(PG_FUNCTION_ARGS, int channel) {
   struct brokerstate *bs;
-  if(!PG_ARGISNULL(0)) {
+  if (!PG_ARGISNULL(0)) {
     int broker_id;
     int once_more = 1;
     broker_id = PG_GETARG_INT32(0);
+    amqp_bytes_t exchange_b = amqp_cstring_bytes("amq.direct");
+    amqp_bytes_t routing_key_b = amqp_cstring_bytes("");
+    amqp_bytes_t body_b = amqp_cstring_bytes("");
+    set_bytes_from_text(exchange_b,1);
+    set_bytes_from_text(routing_key_b,2);
+    set_bytes_from_text(body_b,3);
   redo:
     bs = local_amqp_get_bs(broker_id);
-    if(bs && bs->conn && (channel == 1 || !bs->inerror)) {
+    if (bs && bs->conn && (channel == 1 || !bs->inerror)) {
       int rv;
       amqp_rpc_reply_t *reply;
       amqp_boolean_t mandatory = 0;
       amqp_boolean_t immediate = 0;
-      amqp_bytes_t exchange_b = amqp_cstring_bytes("amq.direct");
-      amqp_bytes_t routing_key_b = amqp_cstring_bytes("");
-      amqp_bytes_t body_b = amqp_cstring_bytes("");
-
-      set_bytes_from_text(exchange_b,1);
-      set_bytes_from_text(routing_key_b,2);
-      set_bytes_from_text(body_b,3);
+            
       rv = amqp_basic_publish(bs->conn, channel, exchange_b, routing_key_b,
                               mandatory, immediate, NULL, body_b);
       reply = amqp_get_rpc_reply();
@@ -303,12 +321,15 @@ pg_amqp_publish_opt(PG_FUNCTION_ARGS, int channel) {
           local_amqp_disconnect_bs(bs);
           goto redo;
         }
+        elog_message("failed to publish to broker", exchange_b, routing_key_b, body_b);
         bs->inerror = 1;
         PG_RETURN_BOOL(0 != 0);
       }
       /* channel two is transactional */
       if(channel == 2) bs->uncommitted++;
       PG_RETURN_BOOL(rv == 0);
+    } else {
+      elog_message("no connection to broker", exchange_b, routing_key_b, body_b);
     }
   }
   PG_RETURN_BOOL(0 != 0);
