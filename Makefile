@@ -1,3 +1,5 @@
+PG_CPPFLAGS += -std=c11
+
 EXTENSION    = amqp
 EXTVERSION   = $(shell grep default_version $(EXTENSION).control | \
                sed -e "s/default_version[[:space:]]*=[[:space:]]*'\([^']*\)'/\1/")
