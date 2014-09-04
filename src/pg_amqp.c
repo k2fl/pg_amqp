@@ -152,6 +152,8 @@ static void amqp_local_phase2(XactEvent event, void *arg) {
       bs->uncommitted = 0;
     }
     break;
+  case XACT_EVENT_PRE_PREPARE:
+  case XACT_EVENT_PRE_COMMIT:
   case XACT_EVENT_PREPARE:
     /* nothin' */
     return;
