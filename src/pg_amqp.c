@@ -87,10 +87,11 @@ static void elog_message(const char *error_msg, amqp_bytes_t exchange_b,
                          amqp_bytes_t routing_key_b, amqp_bytes_t body_b) {
   int el = exchange_b.len * sizeof(char);
   char *exchange = (char *)palloc0(el);
-  snprintf(exchange, el + 1, "%s", (const char *)exchange_b.bytes);
-
+  
   int rl = routing_key_b.len * sizeof(char);
   char *routing_key = (char *)palloc0(rl);
+  
+  snprintf(exchange, el + 1, "%s", (const char *)exchange_b.bytes);
   snprintf(routing_key, rl + 1, "%s", (const char *)routing_key_b.bytes);
 
   elog(WARNING, "%s, exchange[%s], routing_key[%s], body[%s]", error_msg,
@@ -150,14 +151,11 @@ static void amqp_local_phase2(XactEvent event, void *arg) {
     }
     break;
   case XACT_EVENT_PREPARE:
-    /* nothin' */
     break;
-  case XACT_EVENT_PRE_COMMIT:
-    /* nothin' */
+  /*case XACT_EVENT_PRE_COMMIT:
     break;
   case XACT_EVENT_PRE_PREPARE:
-    /* nothin' */
-    break;
+    break;*/
   }
 }
 
