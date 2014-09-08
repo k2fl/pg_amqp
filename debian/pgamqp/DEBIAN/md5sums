@@ -1,0 +1,7 @@
+e1c3afcf49e806730c2362a5d439d6a6  usr/lib/postgresql/9.2/lib/pg_amqp.so
+e0c0fd362b5636b065b11224b611bb01  usr/share/doc/pgamqp/changelog.Debian.gz
+5bc1b7fa4d0b5dfb98379761910ee728  usr/share/doc/pgamqp/copyright
+210e9a5ed5a5927222d1e21f4d4bcdcb  usr/share/doc/postgresql-doc-9.2/extension/amqp.md
+45bdab8f84b3b29d86a9f49526de8210  usr/share/postgresql/9.2/extension/amqp--0.3.1.sql
+6e53a34fe3a25ac56c3e457c116143fc  usr/share/postgresql/9.2/extension/amqp--unpackaged--0.3.0.sql
+4b2ab02d391ff3e9dac4c06e2d9fbfa0  usr/share/postgresql/9.2/extension/amqp.control

@@ -1,0 +1,5 @@
+pgamqp (0.3.1-1) UNRELEASED; urgency=medium
+
+  * Initial release.
+
+ -- Xavier Stevens <xavier@simple.com>  Mon, 08 Sep 2014 17:09:11 +0000
